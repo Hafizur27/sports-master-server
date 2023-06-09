@@ -44,7 +44,7 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const userCollection = client.db("sportsDB").collection("users");
+    const usersCollection = client.db("sportsDB").collection("users");
     const classCollection = client.db("sportsDB").collection("classes");
 
 
@@ -58,13 +58,20 @@ async function run() {
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query =  {email: email};
-      const user = await userCollection.findOne(query);
+      const user = await usersCollection.findOne(query);
     if(user?.role !== 'admin'){
       return res.status(403). send({error: true, message: 'forbidden User'});
     }
     next();
       
     };
+
+    // users api
+    app.post ('/users', async(req, res) =>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
     // post single class data
     app.post('/class', async(req, res) =>{
@@ -74,7 +81,7 @@ async function run() {
     })
 
 
-
+ 
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
