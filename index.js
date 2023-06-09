@@ -44,6 +44,8 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const userCollection = client.db("sportsDB").collection("users");
+    const classCollection = client.db("sportsDB").collection("classes");
 
 
     app.post('/jwt', (req, res) => {
@@ -51,6 +53,29 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
       res.send({token});
     });
+
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query =  {email: email};
+      const user = await userCollection.findOne(query);
+    if(user?.role !== 'admin'){
+      return res.status(403). send({error: true, message: 'forbidden User'});
+    }
+    next();
+      
+    };
+
+    // post single class data
+    app.post('/class', async(req, res) =>{
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
+      res.send(result);
+    })
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
