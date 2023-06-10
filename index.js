@@ -44,8 +44,9 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const usersCollection = client.db("sportsDB").collection("users");
+    const usersCollection = client.db("sportsDB").collection("users"); 
     const classCollection = client.db("sportsDB").collection("classes");
+    const selectClassCollection = client.db("sportsDB").collection("SelectClasses");
 
 
     app.post('/jwt', (req, res) => {
@@ -161,9 +162,15 @@ async function run() {
       res.send(result);
     });
 
+    
+
      // select class post api
 
-     app.post('')
+     app.post('/selectClass', async(req, res) => {
+      const selectClass = req.body;
+      const result = await selectClassCollection.insertOne(selectClass);
+      res.send(result);
+     })
 
     // create payment intent
     app.post('/crate-payment-intent', async(req, res) => {
