@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -65,8 +66,21 @@ async function run() {
       
     };
 
+
+    // verify instructor
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query =  {email: email};
+      const user = await usersCollection.findOne(query);
+    if(user?.role !== 'instructor'){
+      return res.status(403). send({error: true, message: 'forbidden User'});
+    }
+    next();
+      
+    };
+
     // get admin api
-    app.get('/users/admin/:email', verifyJWT, async(req, res) =>{
+    app.get('/users/admin/:email', verifyJWT,  async(req, res) =>{
       const email = req.params.email;
       if(req.decoded.email !== email){
         res.send({admin: false})
@@ -91,7 +105,7 @@ async function run() {
     });
 
     // get instructor api
-    app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
+    app.get('/users/instructor/:email', verifyJWT,  async(req, res) =>{
       const email = req.params.email;
       if(req.decoded.email !== email){
         res.send({admin: false})
@@ -117,6 +131,7 @@ async function run() {
 
     // users get api
     app.get('/users',verifyJWT, async(req, res) =>{
+      
         const result = await usersCollection.find().toArray();
         res.send(result);
     });
@@ -133,12 +148,38 @@ async function run() {
       res.send(result);
     });
 
-    // single sports class create api
+    // get all class api for instructor
+    app.get('/allClass', async(req, res) =>{
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
+
+    // single sports class create api for instructor
     app.post('/class', async(req, res) =>{
       const newClass = req.body;
       const result = await classCollection.insertOne(newClass);
       res.send(result);
     });
+
+     // select class post api
+
+     app.post('')
+
+    // create payment intent
+    app.post('/crate-payment-intent', async(req, res) => {
+      const {price} = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency : 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
+   
 
 
  
