@@ -88,10 +88,35 @@ async function run() {
       };
       const result = await usersCollection.updateOne(filter, updateDoc)
       res.send(result);
-    })
+    });
+
+    // get instructor api
+    app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
+      const email = req.params.email;
+      if(req.decoded.email !== email){
+        res.send({admin: false})
+      }
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      const result = {admin: user?.role === 'instructor'};
+      res.send(result);
+    });
+
+    // instructor api
+    app.patch('/users/instructor/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc)
+      res.send(result);
+    });
 
     // users get api
-    app.get('/users', async(req, res) =>{
+    app.get('/users',verifyJWT, async(req, res) =>{
         const result = await usersCollection.find().toArray();
         res.send(result);
     });
