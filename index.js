@@ -207,7 +207,15 @@ async function run() {
       }
       const result = await selectClassCollection.insertOne(selectClass);
       res.send(result);
-     })
+     });
+
+    //  delete api for select class
+    app.delete('/selectClass/delete/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await selectClassCollection.deleteOne(query);
+      res.send(result);
+    })
 
     // create payment intent
     app.post('/create-payment-intent', verifyJWT, async(req, res) => {
@@ -236,7 +244,18 @@ async function run() {
 
       const query = {_id: {$in: payment.menuId.map(id => new ObjectId(id))}}
       const deleteResult = await selectClassCollection.deleteMany(query);
-      res.send({insertResult, deleteResult});
+
+      const filter = {_id: {$in: payment.selectedClassId.map(id => new ObjectId(id))}}
+
+      const updateDoc = {
+        $set: {
+          seat: payment.seat.map(seat => seat - 1),
+        },
+      };
+
+      const updatedResult = await classCollection.updateMany(filter, updateDoc);
+
+      res.send({insertResult, deleteResult, updatedResult});
     })
 
    
