@@ -157,11 +157,38 @@ async function run() {
     })
 
     // single sports class create api for instructor
-    app.post('/class', async(req, res) =>{
+    app.post('/addClass', async(req, res) =>{
       const newClass = req.body;
       const result = await classCollection.insertOne(newClass);
       res.send(result);
     });
+
+    // status approve api
+    app.patch('/addClass/approve/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: 'approve'
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc)
+      res.send(result);
+      
+    });
+
+    // status deny api
+    app.patch('/addClass/deny/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: 'deny'
+        }
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
 
 
     // getting all selected class of student
