@@ -162,10 +162,14 @@ async function run() {
       res.send(result);
     });
 
-    
+
+    // getting all selected class of studen
+    app.get('/selectClass', async(req, res) =>{
+      const result =  await selectClassCollection.find().toArray();
+      res.send(result);
+    })
 
      // select class post api
-
      app.post('/selectClass', async(req, res) => {
       const selectClass = req.body;
       const result = await selectClassCollection.insertOne(selectClass);
@@ -173,7 +177,7 @@ async function run() {
      })
 
     // create payment intent
-    app.post('/crate-payment-intent', async(req, res) => {
+    app.post('/create-payment-intent', async(req, res) => {
       const {price} = req.body;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
