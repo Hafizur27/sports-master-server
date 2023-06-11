@@ -47,6 +47,7 @@ async function run() {
     const usersCollection = client.db("sportsDB").collection("users"); 
     const classCollection = client.db("sportsDB").collection("classes");
     const selectClassCollection = client.db("sportsDB").collection("SelectClasses");
+    const paymentCollection = client.db("sportsDB").collection("payments");
 
 
     app.post('/jwt', (req, res) => {
@@ -163,7 +164,7 @@ async function run() {
     });
 
 
-    // getting all selected class of studen
+    // getting all selected class of student
     app.get('/selectClass', async(req, res) =>{
       const result =  await selectClassCollection.find().toArray();
       res.send(result);
@@ -172,12 +173,17 @@ async function run() {
      // select class post api
      app.post('/selectClass', async(req, res) => {
       const selectClass = req.body;
+      const query = {category: selectClass?.category};
+      const alreadySelect = await selectClassCollection.findOne(query);
+      if(alreadySelect){
+        return res.send({message: 'already select this category'});
+      }
       const result = await selectClassCollection.insertOne(selectClass);
       res.send(result);
      })
 
     // create payment intent
-    app.post('/create-payment-intent', async(req, res) => {
+    app.post('/create-payment-intent', verifyJWT, async(req, res) => {
       const {price} = req.body;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
@@ -189,6 +195,22 @@ async function run() {
         clientSecret: paymentIntent.client_secret
       })
     });
+
+    // get all payment info api
+    app.get('/payments', async(req, res) =>{
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
+    })
+
+    // payment related api
+    app.post('/payments',verifyJWT, async(req, res) =>{
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = {_id: {$in: payment.menuId.map(id => new ObjectId(id))}}
+      const deleteResult = await selectClassCollection.deleteMany(query);
+      res.send({insertResult, deleteResult});
+    })
 
    
 
