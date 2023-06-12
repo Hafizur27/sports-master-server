@@ -235,6 +235,16 @@ async function run() {
     app.get('/payments', async(req, res) =>{
       const result = await paymentCollection.find().toArray();
       res.send(result);
+    });
+
+    // history page sort api
+    app.get ('/payments/short', async(req, res) => {
+      const query = {};
+      const options = {
+        sort: { 'date': -1 }
+      };
+      const result = await paymentCollection.find(query,options).toArray();
+      res.send(result);
     })
 
     // payment related api
@@ -242,18 +252,19 @@ async function run() {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
 
-      const query = {_id: {$in: payment.menuId.map(id => new ObjectId(id))}}
-      const deleteResult = await selectClassCollection.deleteMany(query);
+      const query = {_id: new ObjectId(payment?.classId)}
+      const deleteResult = await selectClassCollection.deleteOne(query);
 
-      const filter = {_id: {$in: payment.selectedClassId.map(id => new ObjectId(id))}}
+      const filter = {_id: new ObjectId(payment?.CoachId )}
 
       const updateDoc = {
         $set: {
-          seat: payment.seat.map(seat => seat - 1),
+          seat: payment?.seat - 1,
+          student: payment?.student + 1,
         },
       };
 
-      const updatedResult = await classCollection.updateMany(filter, updateDoc);
+      const updatedResult = await classCollection.updateOne(filter, updateDoc);
 
       res.send({insertResult, deleteResult, updatedResult});
     })
