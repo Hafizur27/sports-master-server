@@ -48,6 +48,7 @@ async function run() {
     const classCollection = client.db("sportsDB").collection("classes");
     const selectClassCollection = client.db("sportsDB").collection("SelectClasses");
     const paymentCollection = client.db("sportsDB").collection("payments");
+    const feedbackCollection = client.db("sportsDB").collection("payments");
 
 
     app.post('/jwt', (req, res) => {
@@ -188,8 +189,21 @@ async function run() {
       };
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
 
+    // feedback related api
+    app.put("/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+          $set: {
+            feedback: body.feedback,
+          },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+  });
 
     // getting all selected class of student
     app.get('/selectClass', async(req, res) =>{
